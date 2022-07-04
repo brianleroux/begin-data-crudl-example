@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "test": "node test.mjs | tap-spec"
+    "test": "tape test/*.mjs | tap-spec"
   },
   "dependencies": {
     "@architect/sandbox": "^5.3.0",

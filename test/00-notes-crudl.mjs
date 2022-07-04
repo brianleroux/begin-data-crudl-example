@@ -1,6 +1,7 @@
 import test from 'tape'
 import data from '@begin/data'
 import sandbox from '@architect/sandbox'
+import Notes from '../src/00/notes.mjs'
 
 let mynote = {
   body: 'cool note',
@@ -10,24 +11,18 @@ let mynote = {
 test('start', async t=> {
   t.plan(1)
   await sandbox.start({ quiet: true })
-  t.pass('successful started sandbox')
+  t.pass('successfully started sandbox')
 })
 
 test('create note', async t=> {
   t.plan(1)
-  mynote = await data.set({
-    table: 'notes',
-    ...mynote
-  })
+  mynote = await Notes.create(mynote)
   t.pass('wrote note')
 })
 
 test('read note', async t=> {
   t.plan(1)
-  let result = await data.get({
-    table: 'notes',
-    key: mynote.key
-  })
+  let result = await Notes.read(mynote.key)
   t.pass('found note')
   console.log(result)
 })
@@ -36,20 +31,14 @@ test('update note', async t=> {
   t.plan(1)
   let body = 'some different stuff now'
   mynote.body = body
-  let result = await data.set({
-    table: 'notes',
-    ...mynote
-  })
+  let result = await Notes.update(mynote)
   t.ok(result.body === body, 'updated note')
   console.log(result)
 })
 
 test('destroy note', async t=> {
   t.plan(1)
-  await data.destroy({
-    table: 'notes',
-    key: mynote.key
-  })
+  await Notes.destroy(mynote.key)
   let notes = await data.get({ table: 'notes' })
   t.ok(notes.length === 0, 'perfect, no notes')
   console.log(notes)
@@ -65,7 +54,7 @@ test('list notes', async t=> {
     {table, body}, 
     {table, body}
   ])
-  let notes = await data.get({ table: 'notes' })
+  let notes = await Notes.list()
   t.ok(notes.length === 4, 'perfect, no notes')
   console.log(notes)
 })
