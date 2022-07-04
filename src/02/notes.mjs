@@ -1,79 +1,66 @@
 import data from '@begin/data'
+import Tags from './tags.mjs'
 
 /**
- * slightly less basic crudl;
+ * crudl take 2
  *
  * - [x] roughed in types
  * - [x] one-to-many relationship (one user has-many notes) 
- * - [ ] many-to-many relationship
+ * - [x] many-to-many relationship (one note has-many tags; one tag has-many notes)
  * - [ ] formatting
  * - [ ] validation
  * - [ ] pagination
- *
- * @typedef {Object} User - a user object
- * @property {string} key - a unique user id
- * @property {string} name - the users name
- * @property {string} password - hashed password
  */
-let exampleUser = { key: 'XXXXXXX', name: 'brian', password: 'xxx' }
 
 /**
- * @typedef {Object} Users - a data access layer to read/write User objects
+ * @typedef {Object} Notes - a data access layer to read/write Note objects
  */
-export default {
+export default class Notes {
 
-  /** @typedef {{ name: string, password: string }} UserCreateParams */
-  async create (params) {
-    return data.set({ table: 'users', ...params })
-  },
-
-  /** @param {string} key */
-  async read (key) {
-    return data.get({ table: 'users', key })
-  },
-
-  /** @typedef {{ name: string, key: string }} UserUpdateParams */
-  async update ({ key, name }) {
-    let user = await data.get({ table: 'users', key })
-    user.name = name
-    return data.set(user)
-  },
-
-  notes: {
+  constructor (key) {
+    this.table = `notes-${ key }`
+  }
     
-    /** @typedef {{ userKey: string, body: string }} NotesCreateParams */
-    async create ({ userKey, body }) {
-      let table = `notes-${ userKey }`
-      let ts = Date.now()
-      return data.set({ table, body, ts })
-    },
+  /** @typedef {{ body: string, tags: string[] }} NotesCreateParams */
+  async create ({ body, tags }) {
+    let table = this.table
+    let ts = Date.now()
+    // need to write the record to get a noteKey
+    let record = await data.set({ table, body, tags, ts })
+    // now we can save the tags 
+    await Tags.save({ noteKey: record.key, ts, tags })
+    return record
+  }
 
-    /** @typedef {{ userKey: string, key: string }} NotesReadParams */
-    async read ({ userKey, key }) {
-      let table = `notes-${ userKey }`
-      return data.get({ table, key })
-    },
+  /** @typedef {{ key: string }} NotesReadParams */
+  async read ({ key }) {
+    let table = this.table
+    return data.get({ table, key })
+  }
 
-    /** @typedef {{ userKey: string, key: string, body: string }} NotesUpdateParams */
-    async update ({ userKey, key, body }) {
-      let table = `notes-${ userKey }`
-      let old = await data.get({ table, key })
-      old.body = body
-      old.updated = Date.now()
-      return data.set(old)
-    },
+  /** @typedef {{ key: string, body: string }} NotesUpdateParams */
+  async update ({ key, body }) {
+    let table = this.table
+    let old = await data.get({ table, key })
+    old.body = body
+    old.updated = Date.now()
+    return data.set(old)
+  }
 
-    /** @typedef {{ userKey: string, key: string }} NotesDestroyParams */
-    async destroy ({ userKey, key }) {
-      let table = `notes-${ userKey }`
-      return data.destroy({ table, key })
-    },
+  /** @typedef {{ key: string }} NotesDestroyParams */
+  async destroy (key) {
+    let table = this.table
+    // read the record back
+    let old = await data.get({ table, key })
+    // remove it
+    await data.destroy({ table, key })
+    // notify the tags data access layer to cleanup
+    await Tags.noteDestroyed({ noteKey: key, tags: old.tags })
+  }
 
-    /** @typedef {{ userKey: string }} NotesListParams */
-    async list ({ userKey }) {
-      let table = `notes-${ userKey }`
-      return data.get({ table })
-    }
+  /** @typedef {{}} NotesListParams */
+  async list (params={}) {
+    let table = this.table
+    return data.get({ table })
   }
 }
-

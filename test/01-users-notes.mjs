@@ -69,12 +69,16 @@ test('Users.notes.update', async t => {
   t.ok(result.updated, 'has updated property')
   console.log(result)
 })
+
+test('Users.notes.destroy', async t => {
+  t.plan(1)
+  let result = await Users.notes.destroy({ userKey, key: noteKey })
+  t.pass('destroyed')
+  console.log(result)
+})
+
 test('end', async t => {
   t.plan(1)
   await sandbox.end()
   t.pass('successfully shut down sandbox')
 })
-
-// list user notes
-// read user note
-// destroy user note
