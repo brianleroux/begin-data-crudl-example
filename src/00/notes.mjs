@@ -12,7 +12,7 @@ export default {
   },
 
   async update (params) {
-    if (!key) throw Error('missing key')
+    if (!params.key) throw Error('missing key')
     return data.set({ ...params, table })
   }, 
 

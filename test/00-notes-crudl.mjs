@@ -31,6 +31,7 @@ test('update note', async t=> {
   t.plan(1)
   let body = 'some different stuff now'
   mynote.body = body
+  console.log('........................>', mynote)
   let result = await Notes.update(mynote)
   t.ok(result.body === body, 'updated note')
   console.log(result)
