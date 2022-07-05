@@ -1,7 +1,7 @@
 import data from '@begin/data'
 
 /**
- * bare bones crudl! no types, no joins, no validation, nor pagination
+ * bare bones crudl! no types, no joins, no pagination, and minimal validation
  */
 const table = 'notes'
 
@@ -12,6 +12,7 @@ export default {
   },
 
   async update (params) {
+    if (!key) throw Error('missing key')
     return data.set({ ...params, table })
   }, 
 
